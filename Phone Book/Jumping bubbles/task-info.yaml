@@ -1,0 +1,115 @@
+type: edu
+custom_name: stage2
+files:
+- name: src/phonebook/Main.kt
+  visible: true
+  text: |
+    package phonebook
+
+    import java.io.File
+    import java.io.FileNotFoundException
+    val SPACES = "\\s+".toRegex()
+
+    class PhoneBook {
+
+
+        val phoneBook = mutableMapOf<String, String>()
+
+        fun loadPhoneBook(filePath: String) {
+            try {
+                loadPhoneBookData(File(filePath))
+            } catch (except: Exception) {
+                when (except) {
+                    is FileNotFoundException -> println("File Not Found Exception")
+                    is AccessDeniedException -> println("Access Denied Exception")
+                    is NoSuchFileException -> println("No Such File Exception")
+                    else -> println(except.message)
+                }
+            }
+        }
+
+        private fun loadPhoneBookData(file: File) {
+            file.forEachLine { line ->
+                val (phoneNumber, name) = line.split(SPACES, 2)
+                phoneBook[name.trim()] = phoneNumber
+            }
+        }
+
+        fun linearSearch(name: String): Boolean {
+            for (entry in phoneBook) {
+                if (entry.key == name) {
+                    return true
+                }
+            }
+            return false
+        }
+    }
+
+    fun main() {
+
+        var found = 0
+        var lines = 0
+        val phoneBook = PhoneBook()
+        phoneBook.loadPhoneBook("/Users/mandal/Downloads/directory.txt")
+
+        var searchData = File("/Users/mandal/Downloads/find.txt")
+
+        println("Start searching...")
+        var start = System.currentTimeMillis()
+        searchData.forEachLine {
+            if (phoneBook.linearSearch(it.trim())) {
+                ++found
+            }
+            ++lines
+        }
+        var end = System.currentTimeMillis()
+
+        val min = (end - start) / 1000 / 60
+        val sec = (end - start) / 1000 % 60
+        val ms = (end - start) % 1000
+
+        println("Found $found / $lines entries. Time taken: $min min. $sec sec. $ms ms.")
+    }
+  learner_created: false
+- name: test/PhoneBookTest.java
+  visible: false
+  text: |
+    import org.hyperskill.hstest.stage.StageTest;
+    import org.hyperskill.hstest.testcase.CheckResult;
+    import org.hyperskill.hstest.testcase.TestCase;
+
+    import java.util.Arrays;
+    import java.util.List;
+
+    public class PhoneBookTest extends StageTest {
+
+        @Override
+        public List<TestCase> generate() {
+            return Arrays.asList(
+                new TestCase().setTimeLimit(30 * 60 * 1000)
+            );
+        }
+
+        @Override
+        public CheckResult check(String reply, Object clue) {
+            reply = reply.toLowerCase();
+            return new CheckResult(
+                reply.contains("start searching")
+                    && reply.contains("found")
+                    && reply.contains("min.")
+                    && reply.contains("sec.")
+                    && reply.contains("ms.")
+                    && reply.contains("sorting time")
+                    && reply.contains("searching time")
+                    && reply.contains("linear search")
+                    && reply.contains("bubble sort")
+                    && reply.contains("jump search"));
+        }
+    }
+  learner_created: false
+feedback_link: https://hyperskill.org/learn/step/7749#comment
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Sun, 01 May 2022 08:36:04 UTC
+record: 1

@@ -1,0 +1,217 @@
+type: edu
+custom_name: stage3
+files:
+- name: src/phonebook/Main.kt
+  visible: true
+  text: |
+    package phonebook
+
+    import java.io.File
+    import java.io.FileNotFoundException
+    import kotlin.math.floor
+    import kotlin.math.sqrt
+
+    val SPACES = "\\s+".toRegex()
+
+    class PhoneBook {
+
+
+        private val phoneBook = mutableListOf<Pair<String, String>>()
+
+        fun loadPhoneBook(filePath: String) {
+            try {
+                loadPhoneBookData(File(filePath))
+            } catch (except: Exception) {
+                when (except) {
+                    is FileNotFoundException -> println("File Not Found Exception")
+                    is AccessDeniedException -> println("Access Denied Exception")
+                    is NoSuchFileException -> println("No Such File Exception")
+                    else -> println(except.message)
+                }
+            }
+        }
+
+        fun bubbleSortPhoneEntry() {
+            val phoneBookSize = phoneBook.size
+            for (firstIndex in 0 until phoneBookSize) {
+                for (secondIndex in 0 until phoneBookSize - firstIndex - 1) {
+                    if (phoneBook[secondIndex].first > phoneBook[secondIndex + 1].first) {
+                        val temp = phoneBook[secondIndex]
+                        phoneBook[secondIndex] = phoneBook[secondIndex + 1]
+                        phoneBook[secondIndex + 1] = temp
+
+                    }
+                }
+            }
+        }
+
+        fun jumpSearch(value: String): Boolean {
+            val blockSize = floor(sqrt(phoneBook.size.toDouble())).toInt()
+            var startIndex = 0
+            var lastIndex = 0
+            var count = 0
+
+            for (index in (0..phoneBook.size step blockSize)) {
+                count++
+                val currElem = phoneBook[index]
+                return if (value == currElem.first) {
+                    true
+                } else if (value > currElem.first) {
+                    continue
+                } else if (value < currElem.first && index == 0) {
+                    false
+                } else {
+                    startIndex = index - blockSize
+                    lastIndex = index - 1
+                    break
+                }
+            }
+
+            for (index in lastIndex downTo startIndex) {
+                count++
+                val currVal = phoneBook[index]
+                if (value == currVal.first) {
+                    return true
+                }
+            }
+            return false
+        }
+
+        private fun loadPhoneBookData(file: File) {
+            file.forEachLine { line ->
+                val (phoneNumber, name) = line.split(SPACES, 2)
+                phoneBook.add(name.trim() to  phoneNumber)
+            }
+        }
+
+        fun linearSearch(name: String): Boolean {
+            for (entry in phoneBook) {
+                if (entry.first == name) {
+                    return true
+                }
+            }
+            return false
+        }
+    }
+
+    fun main() {
+
+        var found = 0
+        var lines = 0
+
+        var found1 = 0
+        var lines1 = 0
+        val phoneBook = PhoneBook()
+        phoneBook.loadPhoneBook("/Users/mandal/Downloads/directory.txt")
+
+        val searchData = File("/Users/mandal/Downloads/find.txt")
+
+        println("Start searching...")
+        val start = System.currentTimeMillis()
+        searchData.forEachLine {
+            if (phoneBook.linearSearch(it.trim())) {
+                ++found
+            }
+            ++lines
+        }
+        val end = System.currentTimeMillis()
+
+        val min = (end - start) / 1000 / 60
+        val sec = (end - start) / 1000 % 60
+        val ms = (end - start) % 1000
+
+        println("Found $found / $lines entries. Time taken: $min min. $sec sec. $ms ms.")
+
+
+        val start2 = System.currentTimeMillis()
+        phoneBook.bubbleSortPhoneEntry()
+        val end2 = System.currentTimeMillis()
+        val min2 = (end2 - start2) / 1000 / 60
+        val sec2 = (end2 - start2) / 1000 % 60
+        val ms2 = (end2 - start2) % 1000
+
+        println("Start searching (bubble sort + jump search)...")
+        val start1 = System.currentTimeMillis()
+        searchData.forEachLine {
+            if (phoneBook.jumpSearch(it.trim())) {
+                ++found1
+            }
+            ++lines1
+        }
+        val end1 = System.currentTimeMillis()
+
+        val min1 = (end1 - start1) / 1000 / 60
+        val sec1 = (end1 - start1) / 1000 % 60
+        val ms1 = (end1 - start1) % 1000
+
+        println("Found $found1 / $lines1 entries. Time taken: $min1 min. $sec1 sec. $ms1 ms.")
+        println("Sorting time: $min2 min. $sec2 sec. $ms2 ms.")
+        println("Searching time: $min1 min. $sec1 sec. $ms1 ms.")
+    }
+  learner_created: false
+- name: test/PhoneBookTest.java
+  visible: false
+  text: "import org.hyperskill.hstest.stage.StageTest;\nimport org.hyperskill.hstest.testcase.CheckResult;\n\
+    import org.hyperskill.hstest.testcase.TestCase;\n\nimport java.util.ArrayList;\n\
+    import java.util.Arrays;\nimport java.util.List;\nimport java.util.regex.Matcher;\n\
+    import java.util.regex.Pattern;\n\npublic class PhoneBookTest extends StageTest\
+    \ {\n\n    private long timeOnTestStart;\n    \n    @Override\n    public List<TestCase>\
+    \ generate() {\n        timeOnTestStart = System.currentTimeMillis();\n      \
+    \  return Arrays.asList(\n                new TestCase().setTimeLimit(30 * 60\
+    \ * 1000)\n        );\n    }\n    \n    private CheckResult checkPhrases(String\
+    \ reply, String... phrases) {\n        reply = reply.toLowerCase();\n        for\
+    \ (String phrase : phrases) {\n            if (!reply.contains(phrase.toLowerCase()))\
+    \ {\n                return CheckResult.wrong(\"Not found the part `\" + phrase\
+    \ + \"` in your output.\");\n            }\n        }\n        return CheckResult.correct();\n\
+    \    }\n    \n    private List<String> findAll(String reply, String regex) {\n\
+    \        Matcher matcher = Pattern.compile(regex).matcher(reply);\n        List<String>\
+    \ groups = new ArrayList<>();\n        while (matcher.find()) {\n            groups.add(matcher.group());\n\
+    \        }\n        return groups;\n    }\n    \n    private String timeRegex\
+    \ = \"(\\\\d+)\\\\s*min.*?(\\\\d+)\\\\s*sec.*?(\\\\d+)\\\\s*ms\";\n    private\
+    \ Pattern timeRegexPattern = Pattern.compile(timeRegex);\n    \n    private long\
+    \ parseTimestamp(String timestamp) {\n        Matcher matcher = timeRegexPattern.matcher(timestamp);\n\
+    \        if (!matcher.matches() || matcher.groupCount() < 3) {\n            throw\
+    \ new IllegalStateException(\"???Not matches the line \" + timestamp);\n     \
+    \   }\n        int min = Integer.parseInt(matcher.group(1));\n        int sec\
+    \ = Integer.parseInt(matcher.group(2));\n        int ms = Integer.parseInt(matcher.group(3));\n\
+    \        return ms + sec * 1000 + min * 1000 * 60;\n    }\n    \n    @Override\n\
+    \    public CheckResult check(String reply, Object clue) {\n        long realTime\
+    \ = System.currentTimeMillis() - timeOnTestStart;\n        \n        reply = reply.toLowerCase();\n\
+    \        \n        CheckResult res = checkPhrases(reply,\n                \"found\"\
+    ,\n                \"min.\",\n                \"sec.\",\n                \"ms.\"\
+    ,\n                \"sorting time\",\n                \"searching time\",\n  \
+    \              \"linear search\",\n                \"bubble sort\",\n        \
+    \        \"jump search\",\n                \"quick sort\",\n                \"\
+    binary search\"\n        );\n        if (!res.isCorrect()) {\n            return\
+    \ res;\n        }\n        \n        List<String> stat1 = findAll(reply, \"500\
+    \ / 500\");\n        List<String> stat2 = findAll(reply, \"500/500\");\n     \
+    \   \n        if (stat1.size() + stat2.size() < 3) {\n            return CheckResult.wrong(\"\
+    Your output should contain 3 times the phrase `500 / 500`\");\n        }\n   \
+    \     \n        List<String> timestamps = findAll(reply, timeRegex);\n       \
+    \ if (timestamps.size() != 7) {\n            return CheckResult.wrong(\"Your output\
+    \ should contain 7 timer outputs, but found \"\n                    + timestamps.size());\n\
+    \        }\n        // should not fail..\n        long t1 = parseTimestamp(timestamps.get(0));\n\
+    \        long t2 = parseTimestamp(timestamps.get(1));\n        long t3 = parseTimestamp(timestamps.get(2));\n\
+    \        long t4 = parseTimestamp(timestamps.get(3));\n        long t5 = parseTimestamp(timestamps.get(4));\n\
+    \        long t6 = parseTimestamp(timestamps.get(5));\n        long t7 = parseTimestamp(timestamps.get(6));\n\
+    \        \n        if (Math.abs(t3 + t4 - t2) > 100) {\n            return CheckResult.wrong(\"\
+    Your third and fourth timer outputs in total (sorting and searching) \" +\n  \
+    \                  \"should be equal to the second (total search time).\");\n\
+    \        }\n        if (Math.abs(t6 + t7 - t5) > 100) {\n            return CheckResult.wrong(\"\
+    Your 6-th and 7-th timer outputs in total (sorting and searching) \" +\n     \
+    \               \"should be equal to the 5-th (total search time).\");\n     \
+    \   }\n        \n        long estimatedTime = t1 + t2 + t5;\n        if (realTime\
+    \ < 1000) {\n            return CheckResult.wrong(\"Your program completes too\
+    \ fast. Faster than a second!\");\n        }\n        \n        if (Math.abs(estimatedTime\
+    \ - realTime) > estimatedTime * 0.3) {\n            return CheckResult.wrong(\"\
+    Your estimated time is not similar to real time the program works. \" +\n    \
+    \                \"Real time: \" + realTime + \"ms, estimated time: \" + estimatedTime\
+    \ + \"ms\");\n        }\n        \n        return CheckResult.correct();\n   \
+    \ }\n}\n"
+  learner_created: false
+feedback_link: https://hyperskill.org/learn/step/7750#comment
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Sun, 01 May 2022 13:38:55 UTC
+record: 3
